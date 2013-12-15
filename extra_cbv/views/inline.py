@@ -6,30 +6,28 @@ Created on 05.03.2012
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import smart_str
-from django.views.generic.edit import CreateView, FormMixin, UpdateView, \
-    ProcessFormView
+from django.views.generic.edit import CreateView, FormMixin, UpdateView
 from django.views.generic.list import ListView
+from django.core.exceptions import ObjectDoesNotExist
 
 
 __all__ = ['InlineListView', 'CreateView', 'InlineUpdateView']
 
 
-class InlineListView(ListView):
-    context_master_object_name = None
+class InlineMixin(object):
     master_model = None
+    context_master_object_name = None
 
-    def get(self, *args, **kwargs):
-        self.master = self.get_master_object(self.kwargs['pk'])
-        return super(InlineListView, self).get(*args, **kwargs)
-
-    def get_master_object(self, pk):
+    def get_master_object(self, pk=None):
+        if pk is None:
+            pk = self.kwargs.get('pk')
         return get_object_or_404(self.master_model, pk=pk)
 
     def get_context_master_object_name(self):
         if self.context_master_object_name:
             return self.context_master_object_name
-        elif hasattr(self.master, 'model'):
-            return smart_str(self.master.model._meta.object_name.lower())
+        elif hasattr(self.master_object, 'model'):
+            return smart_str(self.master_object.model._meta.object_name.lower())
         elif self.master_model is not None:
             return smart_str(self.master_model._meta.object_name.lower())
         else:
@@ -37,16 +35,27 @@ class InlineListView(ListView):
 
     def get_context_data(self, **kwargs):
         kwargs.update({
-            'master': self.master,
-            self.get_context_master_object_name(): self.master
+            'master': self.master_object,
+            self.get_context_master_object_name(): self.master_object
         })
-        return super(InlineListView, self).get_context_data(**kwargs)
+        return kwargs
 
 
-class InlineMixin(object):
-    master_model = None
+class InlineListView(InlineMixin, ListView):
+
+    def get(self, *args, **kwargs):
+        self.master_object = self.get_master_object()
+        return super(InlineListView, self).get(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        kwargs = ListView.get_context_data(self, **kwargs)
+        kwargs = InlineMixin.get_context_data(self, **kwargs)
+        return kwargs
+
+
+class InlineFormMixin(InlineMixin):
     success_redirect_on_master = True
-    master_field_name = None
+    master_field_name = None  # required field
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
@@ -58,10 +67,10 @@ class InlineMixin(object):
         self.object.save()
 
     def get_master_object(self):
-        pk = self.kwargs.get('pk')
-        if pk is not None:
-            return self.master_model.objects.get(pk=pk)
-        return None
+        try:
+            return InlineMixin.get_master_object(self)
+        except ObjectDoesNotExist:
+            return None
 
     def get_success_url(self):
         if self.success_redirect_on_master:
@@ -69,28 +78,28 @@ class InlineMixin(object):
         return self.object.get_absolute_url()
 
 
-class InlineCreateView(InlineMixin, CreateView):
+class InlineCreateView(InlineFormMixin, CreateView):
 
     def get(self, request, *args, **kwargs):
-        self.maste_object = self.get_master_object()
+        self.master_object = self.get_master_object()
         return CreateView.get(self, request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        self.maste_object = self.get_master_object()
+        self.master_object = self.get_master_object()
         return CreateView.post(self, request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        ctx = CreateView.get_context_data(self, **kwargs)
-        ctx['object'] = self.get_master_object()
-        return ctx
+        kwargs = CreateView.get_context_data(self, **kwargs)
+        kwargs = InlineFormMixin.get_context_data(self, **kwargs)
+        return kwargs
 
 
-class InlineUpdateView(InlineMixin, UpdateView):
+class InlineUpdateView(InlineFormMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
-        ctx = UpdateView.get_context_data(self, **kwargs)
-        ctx['object'] = self.get_master_object()
-        return ctx
+        kwargs = UpdateView.get_context_data(self, **kwargs)
+        kwargs = InlineFormMixin.get_context_data(self, **kwargs)
+        return kwargs
 
     def get_object(self, queryset=None):
         pk = self.kwargs.get('pk')
@@ -100,5 +109,5 @@ class InlineUpdateView(InlineMixin, UpdateView):
 
     def get_lookup(self):
         return {
-            '%s__id' % self.master_field_name : self.kwargs.get('pk')
+            '%s__id' % self.master_field_name: self.kwargs.get('pk')
         }
