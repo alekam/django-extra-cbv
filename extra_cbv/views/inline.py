@@ -3,12 +3,13 @@ Created on 05.03.2012
 
 @author: alekam
 '''
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import smart_str
+from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormMixin, UpdateView
 from django.views.generic.list import ListView
-from django.core.exceptions import ObjectDoesNotExist
 
 
 __all__ = ['InlineListView', 'CreateView', 'InlineUpdateView']
@@ -17,10 +18,11 @@ __all__ = ['InlineListView', 'CreateView', 'InlineUpdateView']
 class InlineMixin(object):
     master_model = None
     context_master_object_name = None
+    master_pk_url_kwarg = 'pk'
 
     def get_master_object(self, pk=None):
         if pk is None:
-            pk = self.kwargs.get('pk')
+            pk = self.kwargs.get(self.master_pk_url_kwarg)
         return get_object_or_404(self.master_model, pk=pk)
 
     def get_context_master_object_name(self):
@@ -96,18 +98,34 @@ class InlineCreateView(InlineFormMixin, CreateView):
 
 class InlineUpdateView(InlineFormMixin, UpdateView):
 
+    def get(self, request, *args, **kwargs):
+        self.master_object = self.get_master_object()
+        return UpdateView.get(self, request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.master_object = self.get_master_object()
+        return UpdateView.post(self, request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         kwargs = UpdateView.get_context_data(self, **kwargs)
         kwargs = InlineFormMixin.get_context_data(self, **kwargs)
         return kwargs
 
     def get_object(self, queryset=None):
-        pk = self.kwargs.get('pk')
-        if pk is None:
-            raise Http404
-        return self.get_queryset().get(**self.get_lookup())
+        if queryset is None:
+            queryset = self.get_queryset()
+        queryset = queryset.filter(**self.get_lookup())
+        return UpdateView.get_object(self, queryset)
 
     def get_lookup(self):
         return {
-            '%s__id' % self.master_field_name: self.kwargs.get('pk')
+            '%s__id' % self.master_field_name: \
+                                self.kwargs.get(self.master_pk_url_kwarg)
         }
+
+
+class InlineDetailView(InlineMixin, DetailView):
+
+    def get(self, *args, **kwargs):
+        self.master_object = self.get_master_object()
+        return super(InlineDetailView, self).get(*args, **kwargs)
