@@ -36,10 +36,10 @@ class InlineMixin(object):
             return None
 
     def get_context_data(self, **kwargs):
-        kwargs.update({
-            'master': self.master_object,
-            self.get_context_master_object_name(): self.master_object
-        })
+        kwargs['master'] = self.master_object
+        master_name = self.get_context_master_object_name()
+        if master_name:
+            kwargs[master_name] = self.master_object
         return kwargs
 
 
@@ -58,6 +58,7 @@ class InlineListView(InlineMixin, ListView):
 class InlineFormMixin(InlineMixin):
     success_redirect_on_master = True
     master_field_name = None  # required field
+    allow_empty_master = False
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
@@ -71,8 +72,11 @@ class InlineFormMixin(InlineMixin):
     def get_master_object(self):
         try:
             return InlineMixin.get_master_object(self)
-        except ObjectDoesNotExist:
-            return None
+        except ObjectDoesNotExist as e:
+            if self.allow_empty_master:
+                return None
+            else:
+                raise e
 
     def get_success_url(self):
         if self.success_redirect_on_master:
@@ -129,3 +133,8 @@ class InlineDetailView(InlineMixin, DetailView):
     def get(self, *args, **kwargs):
         self.master_object = self.get_master_object()
         return super(InlineDetailView, self).get(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        kwargs = DetailView.get_context_data(self, **kwargs)
+        kwargs = InlineMixin.get_context_data(self, **kwargs)
+        return kwargs
