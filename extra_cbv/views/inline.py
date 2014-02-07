@@ -122,6 +122,8 @@ class InlineUpdateView(InlineFormMixin, UpdateView):
         return UpdateView.get_object(self, queryset)
 
     def get_lookup(self):
+        if self.master_field_name is None:
+            raise ImproperlyConfigured('You need setup `master_field_name` attribute in child class')
         return {
             '%s__id' % self.master_field_name: \
                                 self.kwargs.get(self.master_pk_url_kwarg)
