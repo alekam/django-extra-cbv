@@ -33,7 +33,7 @@ setup(
     url = "https://github.com/alekam/django-extra-cbv",
     license = "New BSD License",
     platforms = ["any"],
-    classifiers = ["Development Status :: %s" % version,
+    classifiers = ["Development Status :: 4 - Beta",
                    "Environment :: Web Environment",
                    "Framework :: Django",
                    "Intended Audience :: Developers",
