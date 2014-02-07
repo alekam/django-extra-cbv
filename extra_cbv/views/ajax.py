@@ -33,7 +33,7 @@ class AjaxResponseMixin(TemplateResponseMixin):
         return {'status': self.status}
 
     def get_ajax_response(self, context, **response_kwargs):
-        return JSONResponse(self.serialize_context(context))
+        return JsonResponse(self.serialize_context(context))
 
     def is_ajax(self):
         return self.request.is_ajax()
