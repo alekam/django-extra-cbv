@@ -22,21 +22,13 @@ class PreProcessMixin(object):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        # Try to dispatch to the right method; if a method doesn't exist,
-        # defer to the error handler. Also defer to the error handler if the
-        # request method isn't on the approved list.
-        if request.method.lower() in self.http_method_names:
-            handler = getattr(self, request.method.lower(),
-                              self.http_method_not_allowed)
-        else:
-            handler = self.http_method_not_allowed
         self.request = request
         self.args = args
         self.kwargs = kwargs
         response = self.pre_process()
         if isinstance(response, HttpResponseBase):
             return response
-        return handler(request, *args, **kwargs)
+        return super(PreProcessMixin, self).dispatch(request, *args, **kwargs)
 
     def pre_process(self):
         """Can be overridden in child class"""
