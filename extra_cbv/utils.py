@@ -1,8 +1,11 @@
-from django.utils import simplejson
+try:
+    import json
+except:
+    from django.utils import simplejson as json
 from django.utils.functional import Promise
 
 
-class LazyEncoder(simplejson.JSONEncoder):
+class LazyEncoder(json.JSONEncoder):
 
     def default(self, o):
         if isinstance(o, Promise):

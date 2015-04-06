@@ -1,6 +1,5 @@
 from ..responses import JsonResponse
 from django.http.response import HttpResponse
-from django.utils import simplejson
 from django.views.generic.base import View, TemplateResponseMixin
 from django.views.generic.edit import FormMixin
 
