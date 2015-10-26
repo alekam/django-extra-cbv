@@ -42,6 +42,7 @@ class SuperSingleObjectMixin(PreProcessMixin, SingleObjectMixin):
     """
     def pre_process(self):
         self.object = self.get_object()
+        super(SuperSingleObjectMixin, self).pre_process()
 
 
 class ShowSuccessMessageMixin(object):
