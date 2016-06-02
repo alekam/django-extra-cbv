@@ -91,13 +91,17 @@ class PaginatedListView(ListView):
 class ProcessView(PreProcessMixin, RedirectView):
 
     def pre_process(self):
-        return self.process()
+        resp = super(ProcessView, self).pre_process()
+        if resp:
+            return resp
+        else:
+            return self.process()
 
     def process(self):
         return
 
 
-class ProcessObjectView(SuperSingleObjectMixin, RedirectView):
+class ProcessObjectView(SuperSingleObjectMixin, ProcessView):
 
     def get_redirect_url(self, **kwargs):
         url = super(ProcessObjectView, self).get_redirect_url(**kwargs)
@@ -107,10 +111,3 @@ class ProcessObjectView(SuperSingleObjectMixin, RedirectView):
             except:
                 pass
         return url
-
-    def pre_process(self):
-        SuperSingleObjectMixin.pre_process(self)
-        return self.process()
-
-    def process(self):
-        pass
