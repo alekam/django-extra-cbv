@@ -22,16 +22,22 @@ class PreProcessMixin(object):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        self.request = request
-        self.args = args
-        self.kwargs = kwargs
-        response = self.pre_process()
-        if isinstance(response, HttpResponseBase):
-            return response
+        # prevent call many times
+        if not hasattr(self, '_is_pre_processed'):
+            self.request = request
+            self.args = args
+            self.kwargs = kwargs
+            response = self.pre_process()
+            if isinstance(response, HttpResponseBase):
+                return response
+            self._is_pre_processed = True
         return super(PreProcessMixin, self).dispatch(request, *args, **kwargs)
 
     def pre_process(self):
-        """Can be overridden in child class"""
+        """
+        Can be overridden in child class
+        You need manual control overload of this method in inheritance
+        """
         return
 
 
@@ -42,7 +48,6 @@ class SuperSingleObjectMixin(PreProcessMixin, SingleObjectMixin):
     """
     def pre_process(self):
         self.object = self.get_object()
-        super(SuperSingleObjectMixin, self).pre_process()
 
 
 class ShowSuccessMessageMixin(object):
