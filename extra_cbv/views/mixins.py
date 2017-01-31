@@ -8,8 +8,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.core.validators import EMPTY_VALUES
 from django.db.models.query_utils import Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, QueryDict
 from django.http.response import HttpResponseBase
+from django.utils.http import is_safe_url
 from django.views.generic.detail import SingleObjectMixin
 
 
@@ -90,7 +91,8 @@ class NextRedirectMixin(object):
     next_url_field_name = 'next'
 
     def get_success_url(self):
-        return self.request.REQUEST.get(self.next_url_field_name)
+        return self.request.POST.get(self.next_url_field_name,
+            self.request.GET.get(self.next_url_field_name))
 
     def is_safe_url(self, url):
         return is_safe_url(url=url, host=self.request.get_host())
@@ -121,8 +123,13 @@ class FilteredListMixin(object):
     def get_filter_kwargs(self, qs=None):
         if qs is None:
             qs = self.get_queryset()
+
+        data = QueryDict(mutable=True)
+        data.update(self.request.POST)
+        data.update(self.request.GET)
+
         return {
-            'data': self.request.REQUEST,
+            'data': data,
             'queryset': qs
         }
 
