@@ -18,12 +18,44 @@ __all__ = ['InlineListView', 'CreateView', 'InlineUpdateView']
 class InlineMixin(object):
     master_model = None
     context_master_object_name = None
-    master_pk_url_kwarg = 'pk'
 
-    def get_master_object(self, pk=None):
-        if pk is None:
-            pk = self.kwargs.get(self.master_pk_url_kwarg)
-        return get_object_or_404(self.master_model, pk=pk)
+    # like Django SingleObjectMixin
+    master_slug_field = 'slug'
+    master_slug_url_kwarg = 'slug'
+    master_pk_url_kwarg = 'pk'
+    master_query_pk_and_slug = False
+
+    def get_master_object_queryset(self):
+        return self.master_model._default_manager.all()
+
+    def get_master_object(self, queryset=None):
+        if queryset is None:
+            queryset = self.get_master_object_queryset()
+
+        # Next, try looking up by primary key.
+        pk = self.kwargs.get(self.master_pk_url_kwarg)
+        slug = self.kwargs.get(self.master_slug_url_kwarg)
+        if pk is not None:
+            queryset = queryset.filter(pk=pk)
+
+        # Next, try looking up by slug.
+        if slug is not None and (pk is None or self.master_query_pk_and_slug):
+            slug_field = self.master_slug_field
+            queryset = queryset.filter(**{slug_field: slug})
+
+        # If none of those are defined, it's an error.
+        if pk is None and slug is None:
+            raise AttributeError("Generic inline view %s must be called with "
+                                 "either a master object pk or a slug."
+                                 % self.__class__.__name__)
+
+        try:
+            # Get the single item from the filtered queryset
+            obj = queryset.get()
+        except queryset.model.DoesNotExist:
+            raise Http404(_("No %(verbose_name)s found matching the query") %
+                          {'verbose_name': queryset.model._meta.verbose_name})
+        return obj
 
     def get_context_master_object_name(self):
         if self.context_master_object_name:
@@ -36,11 +68,14 @@ class InlineMixin(object):
             return None
 
     def get_context_data(self, **kwargs):
-        kwargs['master'] = self.master_object
-        master_name = self.get_context_master_object_name()
-        if master_name:
-            kwargs[master_name] = self.master_object
-        return kwargs
+        context = {}
+        if self.master_object:
+            context['master_object'] = self.master_object
+            master_name = self.get_context_master_object_name()
+            if master_name:
+                context[master_name] = self.master_object
+        context.update(kwargs)
+        return super(InlineMixin, self).get_context_data(**context)
 
 
 class InlineListView(InlineMixin, ListView):
@@ -48,11 +83,6 @@ class InlineListView(InlineMixin, ListView):
     def get(self, *args, **kwargs):
         self.master_object = self.get_master_object()
         return super(InlineListView, self).get(*args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        kwargs = ListView.get_context_data(self, **kwargs)
-        kwargs = InlineMixin.get_context_data(self, **kwargs)
-        return kwargs
 
 
 class InlineFormMixin(InlineMixin):
@@ -94,11 +124,6 @@ class InlineCreateView(InlineFormMixin, CreateView):
         self.master_object = self.get_master_object()
         return CreateView.post(self, request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        kwargs = CreateView.get_context_data(self, **kwargs)
-        kwargs = InlineFormMixin.get_context_data(self, **kwargs)
-        return kwargs
-
 
 class InlineUpdateView(InlineFormMixin, UpdateView):
 
@@ -109,11 +134,6 @@ class InlineUpdateView(InlineFormMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         self.master_object = self.get_master_object()
         return UpdateView.post(self, request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        kwargs = UpdateView.get_context_data(self, **kwargs)
-        kwargs = InlineFormMixin.get_context_data(self, **kwargs)
-        return kwargs
 
     def get_object(self, queryset=None):
         if queryset is None:
@@ -135,8 +155,3 @@ class InlineDetailView(InlineMixin, DetailView):
     def get(self, *args, **kwargs):
         self.master_object = self.get_master_object()
         return super(InlineDetailView, self).get(*args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        kwargs = DetailView.get_context_data(self, **kwargs)
-        kwargs = InlineMixin.get_context_data(self, **kwargs)
-        return kwargs
