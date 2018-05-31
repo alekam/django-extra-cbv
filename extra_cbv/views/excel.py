@@ -3,7 +3,7 @@
 import StringIO
 import datetime
 
-from django.db.models.query import QuerySet, ValuesQuerySet
+from django.db.models.query import QuerySet
 from django.http import HttpResponse
 
 
@@ -15,19 +15,21 @@ class ExcelResponse(HttpResponse):
 
         # Make sure we've got the right type of data to work with
         valid_data = False
-        if isinstance(data, ValuesQuerySet):
-            data = list(data)
-        elif isinstance(data, QuerySet):
+        if isinstance(data, QuerySet):
             data = list(data.values())
-        if hasattr(data, '__getitem__'):
+        else:
+            data = list(data)
+        if hasattr(data, '__getitem__') and len(data):
             if isinstance(data[0], dict):
                 if headers is None:
                     headers = data[0].keys()
                 data = [[row[col] for col in headers] for row in data]
                 data.insert(0, headers)
+            else:
+                data.insert(0, headers)
             if hasattr(data[0], '__getitem__'):
                 valid_data = True
-        assert valid_data is True, "ExcelResponse requires a sequence of sequences"
+#         assert valid_data is True, "ExcelResponse requires a sequence of sequences"
 
         output = StringIO.StringIO()
         # Excel has a limit on number of rows; if we have more than that, make a csv
@@ -76,6 +78,6 @@ class ExcelResponse(HttpResponse):
             file_ext = 'csv'
         output.seek(0)
         super(ExcelResponse, self).__init__(content=output.getvalue(),
-                                            mimetype=mimetype)
+                                            content_type=mimetype)
         self['Content-Disposition'] = 'attachment;filename="%s.%s"' % \
             (output_name.replace('"', '\"'), file_ext)
