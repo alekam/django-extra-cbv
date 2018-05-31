@@ -3,9 +3,8 @@ Created on 05.03.2012
 
 @author: alekam
 '''
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.http import Http404
-from django.shortcuts import get_object_or_404
 from django.utils.encoding import smart_str
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormMixin, UpdateView
