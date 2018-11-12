@@ -1,22 +1,8 @@
-from ..responses import JsonResponse
-from django.http.response import HttpResponse
-from django.views.generic.base import View, TemplateResponseMixin
+# coding: utf-8
+
+from django.http.response import JsonResponse
+from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.edit import FormMixin
-
-
-class JsonView(View):
-    response_class = JsonResponse
-
-    def get(self, request, *args, **kwargs):
-        return self.get_response(self.get_data(**kwargs))
-
-    def get_data(self, **kwargs):
-        return {
-            'params': kwargs
-        }
-
-    def get_response(self, data, **response_kwargs):
-        return self.response_class(data, **response_kwargs)
 
 
 class AjaxResponseMixin(TemplateResponseMixin):
@@ -40,7 +26,6 @@ class AjaxResponseMixin(TemplateResponseMixin):
 
 class AjaxFormMixin(AjaxResponseMixin, FormMixin):
     form_key_name = 'form'
-    status = False
 
     def serialize_context(self, context=None):
         if not self.status:
@@ -52,8 +37,8 @@ class AjaxFormMixin(AjaxResponseMixin, FormMixin):
             return {'status': True}
 
     def form_valid(self, form):
+        self.status = True
         if self.is_ajax():
-            self.status = True
             return self.get_ajax_response({'form': form})
         return FormMixin.form_valid(self, form)
 
