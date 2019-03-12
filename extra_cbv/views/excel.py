@@ -29,7 +29,7 @@ class ExcelResponse(HttpResponse):
                 data.insert(0, headers)
             if hasattr(data[0], '__getitem__'):
                 valid_data = True
-#         assert valid_data is True, "ExcelResponse requires a sequence of sequences"
+        # assert valid_data is True, "ExcelResponse requires a sequence of sequences"
 
         output = StringIO.StringIO()
         # Excel has a limit on number of rows; if we have more than that, make a csv

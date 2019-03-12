@@ -32,8 +32,8 @@ class DownloadReportView(View):
 
         response = HttpResponse(content=output.getvalue(),
                                 mimetype=self.get_mimetype())
-        response['Content-Disposition'] = 'attachment;filename="%s"' % \
-                                                            self.get_filename()
+        response['Content-Disposition'] = \
+            'attachment;filename="%s"' % self.get_filename()
         return response
 
     def get_filename(self):
@@ -80,7 +80,7 @@ class PaginatedListView(ListView):
         #            pags.append(('Prev', p.page(pg - 1) ,))
         for n in range(pg - 2, pg + 2):
             if n in p.page_range:
-            #                pags.append((n, p.page(n) ,))
+                #    pags.append((n, p.page(n) ,))
                 pags.append((n, n,))
         if p.num_pages not in range(pg - 2, pg + 3):
             pags.append(('...', None,))

@@ -82,8 +82,10 @@ class GetQuerysetMixin(object):
         elif self.model is not None:
             queryset = self.model._default_manager.all()
         else:
-            raise ImproperlyConfigured(u"'%s' must define 'queryset' or 'model'"
-                                       % self.__class__.__name__)
+            raise ImproperlyConfigured(
+                u"'%s' must define 'queryset' or 'model'"
+                % self.__class__.__name__
+            )
         return queryset
 
 
@@ -91,8 +93,10 @@ class NextRedirectMixin(object):
     next_url_field_name = 'next'
 
     def get_success_url(self):
-        return self.request.POST.get(self.next_url_field_name,
-            self.request.GET.get(self.next_url_field_name))
+        return self.request.POST.get(
+            self.next_url_field_name,
+            self.request.GET.get(self.next_url_field_name)
+        )
 
     def is_safe_url(self, url):
         return is_safe_url(url=url, host=self.request.get_host())

@@ -9,6 +9,7 @@ from django.utils.encoding import smart_str
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormMixin, UpdateView
 from django.views.generic.list import ListView
+from django.utils.translation import ugettext_lazy as _
 
 
 __all__ = ['InlineListView', 'CreateView', 'InlineUpdateView']
@@ -144,8 +145,8 @@ class InlineUpdateView(InlineFormMixin, UpdateView):
         if self.master_field_name is None:
             raise ImproperlyConfigured('You need setup `master_field_name` attribute in child class')
         return {
-            '%s__id' % self.master_field_name: \
-                                self.kwargs.get(self.master_pk_url_kwarg)
+            '%s__id' % self.master_field_name:
+                self.kwargs.get(self.master_pk_url_kwarg)
         }
 
 

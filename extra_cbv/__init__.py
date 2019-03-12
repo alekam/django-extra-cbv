@@ -1,5 +1,5 @@
 # major, minor, patch
-VERSION = (0, 2)
+VERSION = (0, 2, 1)
 
 
 def get_version():
