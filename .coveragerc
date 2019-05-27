@@ -1,0 +1,24 @@
+[run]
+branch = True
+plugins =
+    django_coverage_plugin
+omit =
+    */migrations/*
+
+[html]
+directory = public/coverage
+
+[xml]
+output = public/coverage/coverage.xml
+package_depth = 4
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:

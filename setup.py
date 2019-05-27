@@ -1,7 +1,12 @@
+import os.path
 from setuptools import setup, find_packages
 
 
 version = __import__('extra_cbv').get_version()
+
+
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
 def get_requires_list(filename):
@@ -27,6 +32,7 @@ setup(
     name="django-extra-cbv",
     version=version,
     description="Extra class based views for Django",
+    long_description=read('README.md'),
     keywords="cbv, class based views",
     author="Alex Kamedov",
     author_email="alex@kamedov.ru",
@@ -44,5 +50,4 @@ setup(
     packages=find_packages(exclude=["tests", "tests.*"]),
     install_requires=get_requires_list('requirements.txt'),
     include_package_data=True,
-    zip_safe=False
 )

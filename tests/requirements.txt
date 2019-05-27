@@ -1,0 +1,13 @@
+pytest
+pytest-cov
+pytest-django
+pytest-dotenv
+pytest-pythonpath
+pytest-xdist
+pytest-html
+django_coverage_plugin
+factory-boy
+
+Django>=1.9,<2.0
+django-environ==0.4.5
+model_mommy==1.3.2
