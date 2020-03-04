@@ -33,8 +33,8 @@ class SerializePaginationMixin(object):
     def serialize_context(self, context):
         data = super(SerializePaginationMixin, self).serialize_context(context)
 
-        if 'page_obj' in context and 'paginator' in context:
-            # if context['is_paginated']:
+        # if 'page_obj' in context and 'paginator' in context:
+        if context.get('is_paginated', False):
             data['pagination'] = self.get_pagination_data(context)
 
         return data
