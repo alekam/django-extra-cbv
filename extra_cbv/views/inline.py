@@ -6,6 +6,7 @@ Created on 05.03.2012
 from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.http import Http404
 from django.utils.encoding import smart_str
+from django.utils.translation import ugettext_lazy as _
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormMixin, UpdateView
 from django.views.generic.list import ListView
